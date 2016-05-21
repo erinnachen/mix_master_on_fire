@@ -1,4 +1,4 @@
-# MixMaster
+# MixMaster On Fire
 
 To start your Phoenix app:
 
