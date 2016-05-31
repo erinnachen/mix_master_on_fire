@@ -77,158 +77,142 @@ and now we are ready to write a test. If you want to run a sample test to see th
 
 Inside of that file, we'll use our user story to flesh out a feature test:
 
-```ruby
-require 'rails_helper'
+```elixir
+defmodule MixMaster.UserCreatesArtistTest do
+  use MixMaster.ConnCase
 
-RSpec.feature "User submits a new artist" do
-  scenario "they see the page for the individual artist" do
-    artist_name       = "Bob Marley"
+  use Hound.Helpers
+
+  hound_session
+
+  test "User submits a new artist" do
+    artist_name = "Bob Marley"
     artist_image_path = "http://cps-static.rovicorp.com/3/JPG_400/MI0003/146/MI0003146038.jpg"
 
-    visit artists_path
-    click_on "New artist"
-    fill_in "artist_name", with: artist_name
-    fill_in "artist_image_path", with: artist_image_path
-    click_on "Create Artist"
+    navigate_to "/artists"
 
-    expect(page).to have_content artist_name
-    expect(page).to have_css("img[src=\"#{artist_image_path}\"]")
+    click({:link_text, "New artist"})
+    fill_field({:name, "artist[name]"}, artist_name)
+    fill_field({:name, "artist[image_path]"}, artist_image_path)
+    click({:css, "[type=submit]"})
+
+    assert page_source =~ artist_name
+    assert find_element(:css,"img[src=\"#{artist_image_path}\"]")
   end
 end
 ```
 
-Let's run the spec and see what happens. From your command line, type `rspec`.
+Let's run the test and see what happens. From your command line, type `mix test`.
 
 You should see this error:
-
 ```
-/usr/local/rvm/gems/ruby-2.2.2/gems/activerecord-4.2.5/lib/active_record/connection_adapters/postgresql_adapter.rb:661:in `rescue in connect': FATAL:  database "mix_master_test" does not exist (ActiveRecord::NoDatabaseError)
-```
-
-This means that we haven't created our database yet. We need to run `rake db:create`. Now run the test again.
-
-```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
-
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: visit artists_path
-
-     NameError:
-       undefined local variable or method `artists_path' for #<RSpec::ExampleGroups::UserSubmitsANewArtist:0x007f9dccce0330>
-     # ./spec/features/user_creates_a_song_spec.rb:8:in `block (2 levels) in <top (required)>'
-
-Finished in 0.00376 seconds (files took 5.88 seconds to load)
-1 example, 1 failure
-
-Failed examples:
-
-rspec ./spec/features/user_creates_a_song_spec.rb:4 # User submits a new artist they see the page for the individual artist
+1) test User submits a new artist (MixMaster.UserCreatesArtistTest)
+     test/features/user_creates_an_artist_test.exs:8
+     ** (Hound.NoSuchElementError) No element found for link_text 'New artist'
+     stacktrace:
+       (hound) lib/hound/helpers/page.ex:51: Hound.Helpers.Page.find_element/3
+       (hound) lib/hound/helpers/element.ex:281: Hound.Helpers.Element.click/1
+       test/features/user_creates_an_artist_test.exs:14
 ```
 
-The first bit tells us that we don't have a `schema.rb`. That's ok; we don't have any migrations yet. Let's use the errors and failures to guide our development. We'll focus in on this line:
+This seems odd since we don't have any pages... or do we?? Hound has a nice feature if you're confused where you are, you can take a [screenshot!](https://hexdocs.pm/hound/Hound.Helpers.Screenshot.html) So yeah, we don't have route "/artists", and we're actually getting a 404 page back.
 
-```
-NameError:
-       undefined local variable or method `artists_path' for #<RSpec::ExampleGroups::UserSubmitsANewArtist:0x007f9dccce0330>
-```
 
-This tells us that we don't have an artists_path (which will be the index of all artists), so we'll define that in our `config/routes.rb` file:
+So let's define that in our `web/router.ex` file:
 
-```ruby
-Rails.application.routes.draw do
-  resources :artists, only: [:index]
+```elixir
+...
+scope "/", MixMaster do
+  pipe_through :browser # Use the default browser stack
+
+  get "/", PageController, :index
+  resources "/artists", ArtistsController, only: [:index]
 end
 ```
 
-When we run rake routes, we'll see this output:
+When we run `mix phoenix.routes`, we'll see this output:
 
 ```
-Prefix Verb URI Pattern        Controller#Action
-artists GET  /artists(.:format) artists#index
+page_path     GET  /         MixMaster.PageController :index
+artists_path  GET  /artists  MixMaster.ArtistsController :index
 ```
 
-Since the prefix is `artists`, we can append `_path` which will create the link to `'/artists'`. Run the spec again:
+When we run the test again, we get the output:
 
 ```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
+Server: localhost:4001 (http)
+Request: GET /artists
+** (exit) an exception was raised:
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsController.init/1 (module MixMaster.ArtistsController is not available)
+        MixMaster.ArtistsController.init(:index)
+        (mix_master) web/router.ex:1: anonymous fn/1 in MixMaster.Router.match_route/4
+        (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
+        (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
+        (mix_master) lib/mix_master/endpoint.ex:1: MixMaster.Endpoint.phoenix_pipeline/1
+        (mix_master) lib/phoenix/endpoint/render_errors.ex:34: MixMaster.Endpoint.call/2
+        (plug) lib/plug/adapters/cowboy/handler.ex:15: Plug.Adapters.Cowboy.Handler.upgrade/4
+        (cowboy) src/cowboy_protocol.erl:442: :cowboy_protocol.execute/4
 
-Failures:
 
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: visit artists_path
-
-     ActionController::RoutingError:
-       uninitialized constant ArtistsController
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/conditionalget.rb:25:in `call'
-     ...
+  1) test User submits a new artist (MixMaster.UserCreatesArtistTest)
+     test/features/user_creates_an_artist_test.exs:8
+     ** (Hound.NoSuchElementError) No element found for link_text 'New artist'
+     stacktrace:
+       (hound) lib/hound/helpers/page.ex:51: Hound.Helpers.Page.find_element/3
+       (hound) lib/hound/helpers/element.ex:281: Hound.Helpers.Element.click/1
+       test/features/user_creates_an_artist_test.exs:14
 ```
 
-We'll need to create an ArtistsController. We can do this using the [rails generate controller](http://guides.rubyonrails.org/getting_started.html#say-hello-rails) command, but this will give us a whole bunch of files that we a) probably won't use, and b) are untested. Let's create the controller by hand:
+We'll need to create an ArtistsController. Phoenix has many [mix tasks](http://www.phoenixframework.org/docs/mix-tasks), but let's create the controller by hand:
 
-`$ touch app/controllers/artists_controller.rb`
+`$ touch web/controllers/artists_controller.ex`
 
 And inside of that file, we'll define the controller:
 
-```ruby
-class ArtistsController < ApplicationController
-end
-```
+```elixir
+defmodule MixMaster.ArtistsController do
+  use MixMaster.Web, :controller
 
-Run the spec again:
-
-```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
-
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: visit artists_path
-
-     AbstractController::ActionNotFound:
-       The action 'index' could not be found for ArtistsController
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
-```
-
-If we look at the output of `rake routes`, we'll see that `artists_path` should be going to the index action:
-
-```
-Prefix Verb URI Pattern        Controller#Action
-artists GET  /artists(.:format) artists#index
-```
-
-We haven't defined the index action, so let's do that inside of the controller:
-
-```
-class ArtistsController < ApplicationController
-  def index
+  def index(conn, _params) do
+    render conn, "index.html"
   end
 end
-```
-
-Run the spec again:
 
 ```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
 
-Failures:
+Run the spec again and we get oh so so many errors.... One being that we don't have a View.
 
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: visit artists_path
-
-     ActionView::MissingTemplate:
-       Missing template artists/index, application/index with {:locale=>[:en], :formats=>[:html], :variants=>[], :handlers=>[:erb, :builder, :raw, :ruby, :coffee, :jbuilder]}. Searched in:
-         * "/Users/rwarbelow/Desktop/Coding/Turing/mix_master/app/views"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
 ```
+Server: localhost:4001 (http)
+Request: GET /artists
+** (exit) an exception was raised:
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsView.render/2 (module MixMaster.ArtistsView is not available)
+        MixMaster.ArtistsView.render("index.html", %{conn: %Plug.Conn{adapter: {Plug.Adapters.Cowboy.Conn, :...}, assigns: %{layout: {MixMaster.LayoutView, "app.html"}}, before_send: [#Function<1.86541599/1 in Plug.CSRFProtection.call/2>, #Function<11.43365902/1 in Phoenix.Controller.fetch_flash/2>, #Function<0.7214162/1 in Plug.Session.before_send/2>, #Function<1.95519006/1 in Plug.Logger.call/2>], body_params: %{}, cookies: %{}, halted: false, host: "localhost", method: "GET", owner: #PID<0.419.0>, params: %{}, path_info: ["artists"], peer: {{127, 0, 0, 1}, 54191}, port: 4001, private: %{MixMaster.Router => {[], %{}}, :phoenix_action => :index, :phoenix_controller => MixMaster.ArtistsController, :phoenix_endpoint => MixMaster.Endpoint, :phoenix_flash => %{}, :phoenix_format => "html", :phoenix_layout => {MixMaster.LayoutView, :app}, :phoenix_pipelines => [:browser], :phoenix_route => #Function<0.60479521/1 in MixMaster.Router.match_route/4>, :phoenix_router => MixMaster.Router, :phoenix_template => "index.html", :phoenix_view => MixMaster.ArtistsView, :plug_session => %{}, :plug_session_fetch => :done}, query_params: %{}, query_string: "", remote_ip: {127, 0, 0, 1}, req_cookies: %{}, req_headers: [{"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}, {"user-agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1"}, {"connection", "Keep-Alive"}, {"accept-encoding", "gzip, deflate"}, {"accept-language", "en-US,*"}, {"host", "localhost:4001"}], request_path: "/artists", resp_body: nil, resp_cookies: %{}, resp_headers: [{"cache-control", "max-age=0, private, must-revalidate"}, {"x-request-id", "1p1mt3dkk01k4gg2enf457k2a00dulfu"}, {"x-frame-options", "SAMEORIGIN"}, {"x-xss-protection", "1; mode=block"}, {"x-content-type-options", "nosniff"}], scheme: :http, script_name: [], secret_key_base: "secretkeybase", state: :unset, status: nil}, view_module: MixMaster.ArtistsView, view_template: "index.html"})
+        (mix_master) web/templates/layout/app.html.eex:29: MixMaster.LayoutView."app.html"/1
+        (phoenix) lib/phoenix/view.ex:344: Phoenix.View.render_to_iodata/3
+        (phoenix) lib/phoenix/controller.ex:633: Phoenix.Controller.do_render/4
+        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.action/2
+        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.phoenix_controller_pipeline/2
+        (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
+        (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
+        (mix_master) lib/mix_master/endpoint.ex:1: MixMaster.Endpoint.phoenix_pipeline/1
+        (mix_master) lib/phoenix/endpoint/render_errors.ex:34: MixMaster.Endpoint.call/2
+        (plug) lib/plug/adapters/cowboy/handler.ex:15: Plug.Adapters.Cowboy.Handler.upgrade/4
+        (cowboy) src/cowboy_protocol.erl:442: :cowboy_protocol.execute/4
+```
+
+In Phoenix, there's a View layer that aids in rendering templates. Controllers and Views must start with the same name, so an ArtistsController must have an ArtistsView. Let's create that now:
+```
+touch web/views/artists_view.ex
+```
+and add
+```elixir
+defmodule MixMaster.ArtistsView do
+  use MixMaster.Web, :view
+end
+```
+
+
 
 Rails is attempting to find `artists/index` inside of our views folder, but it doesn't see it (because we haven't created it. Good job, Rails!). Let's make that:
 
