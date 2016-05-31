@@ -35,8 +35,6 @@ config :phoenix, :stacktrace_depth, 20
 # Configure your database
 config :mix_master, MixMaster.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
-  database: "mix_master_dev",
+  database: "phoenix_mix_master_dev",
   hostname: "localhost",
   pool_size: 10
