@@ -4,4 +4,9 @@ defmodule MixMaster.ArtistsController do
   def index(conn, _params) do
     render conn, "index.html"
   end
+
+  def new(conn, _params) do
+    changeset = Artist.changeset(%Artist{})
+    render conn, "new.html"
+  end
 end

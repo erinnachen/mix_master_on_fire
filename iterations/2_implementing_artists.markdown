@@ -212,125 +212,129 @@ defmodule MixMaster.ArtistsView do
 end
 ```
 
-
-
-Rails is attempting to find `artists/index` inside of our views folder, but it doesn't see it (because we haven't created it. Good job, Rails!). Let's make that:
+Running the test again:
 
 ```
-$ mkdir app/views/artists
-$ touch app/views/artists/index.html.erb
+Request: GET /artists
+** (exit) an exception was raised:
+    ** (Phoenix.Template.UndefinedError) Could not render "index.html" for MixMaster.ArtistsView, please define a matching clause for render/2 or define a template at "web/templates/artists". No templates were compiled for this module.
 ```
 
-Run the spec again:
+Phoenix is attempting to find `web/templates/artists/index.html` inside of our templates folder, but it doesn't see it (because we haven't created it).
+
+Let's make that:
 
 ```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
+$ mkdir web/templates/artists
+$ touch web/templates/artists/index.html.eex
+```
 
-Failures:
+Run the spec again and we're back to the error we started with, just without the crazy stack trace!
 
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "New artist"
-
-     Capybara::ElementNotFound:
-       Unable to find link or button "New artist"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/capybara-2.5.0/lib/capybara/node/finders.rb:43:in `block in find'
-     ...
+```
+1) test User submits a new artist (MixMaster.UserCreatesArtistTest)
+    test/features/user_creates_an_artist_test.exs:8
+    ** (Hound.NoSuchElementError) No element found for link_text 'New artist'
+    stacktrace:
+      (hound) lib/hound/helpers/page.ex:51: Hound.Helpers.Page.find_element/3
+      (hound) lib/hound/helpers/element.ex:281: Hound.Helpers.Element.click/1
+      test/features/user_creates_an_artist_test.exs:14
 ```
 
 It's not seeing a link or button to click for new artist. We'll need to add that in the view:
 
-```erb
+```eex
 <h1>All Artists</h1>
 
-<%= link_to "New artist", new_artist_path %>
+<a href="<%= artists_path(@conn, :new) %>">New artist</a>
 ```
 
 Run the spec:
 
 ```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
+Request: GET /artists
+** (exit) an exception was raised:
+    ** (ArgumentError) No helper clause for MixMaster.Router.Helpers.artists_path/2 defined for action :new.
+The following artists_path actions are defined under your router:
 
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: <%= link_to "New artist", new_artist_path %>
-
-     ActionView::Template::Error:
-       undefined local variable or method `new_artist_path' for #<#<Class:0x007fee98ab17e0>:0x007fee98aa1188>
-     # ./app/views/artists/index.html.erb:3:in `_app_views_artists_index_html_erb__160270083333517601_70331334416800'
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
+  * :index
+        (phoenix) lib/phoenix/router/helpers.ex:289: Phoenix.Router.Helpers.raise_route_error/5
+        (mix_master) web/templates/artists/index.html.eex:3: MixMaster.ArtistsView."index.html"/1
+        (mix_master) web/templates/layout/app.html.eex:29: MixMaster.LayoutView."app.html"/1
+        (phoenix) lib/phoenix/view.ex:344: Phoenix.View.render_to_iodata/3
+        (phoenix) lib/phoenix/controller.ex:633: Phoenix.Controller.do_render/4
+        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.action/2
+        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.phoenix_controller_pipeline/2
+        (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
+        (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
+        (mix_master) lib/mix_master/endpoint.ex:1: MixMaster.Endpoint.phoenix_pipeline/1
+        (mix_master) lib/phoenix/endpoint/render_errors.ex:34: MixMaster.Endpoint.call/2
+        (plug) lib/plug/adapters/cowboy/handler.ex:15: Plug.Adapters.Cowboy.Handler.upgrade/4
+        (cowboy) src/cowboy_protocol.erl:442: :cowboy_protocol.execute/4
+...
 ```
 
-We've used the `new_artist_path` helper, but that doesn't exist yet. It should return a path of `'/artists/new'`, so we'll need to add this to our `routes.rb`:
+We've used the `artists_path` helper with the :new action, but that doesn't exist yet. It should return a path of `'/artists/new'`, so we'll need to add this to our `web/router.ex`:
 
-```ruby
-Rails.application.routes.draw do
-  resources :artists, only: [:index, :new]
+```elixir
+scope "/", MixMaster do
+  pipe_through :browser # Use the default browser stack
+
+  get "/", PageController, :index
+  resources "/artists", ArtistsController, only: [:index, :new]
 end
 ```
 
-Run `rake routes` to see the new route:
+Run `mix phoenix.routes` to see the new route:
 
 ```
-Prefix Verb URI Pattern            Controller#Action
-artists GET  /artists(.:format)     artists#index
-new_artist GET  /artists/new(.:format) artists#new
+page_path     GET  /             MixMaster.PageController :index
+artists_path  GET  /artists      MixMaster.ArtistsController :index
+artists_path  GET  /artists/new  MixMaster.ArtistsController :new
 ```
 
-Now that we have the `new_artist_path`, we'll run the spec again. Can you predict what the error will be?
+Now that we have the `artists_path(@conn, :new)`, we'll run the test again. Can you predict what the error will be?
 
 ```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-F
+Request: GET /artists/new
+** (exit) an exception was raised:
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsController.new/2
 
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "New artist"
-
-     AbstractController::ActionNotFound:
-       The action 'new' could not be found for ArtistsController
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
+...
 ```
 
 Our route specifies that `'/artists/new'` should go to the `new` action in the controller, but we haven't defined that:
 
-```ruby
-class ArtistsController < ApplicationController
-  def index
+```elixir
+defmodule MixMaster.ArtistsController do
+  use MixMaster.Web, :controller
+
+  def index(conn, _params) do
+    render conn, "index.html"
   end
 
-  def new
+  def new(conn, _params) do
+    render conn, "new.html"
   end
 end
 ```
 
-Let's run the spec again:
+Let's run the test again:
 
 ```
-.
-F
+Request: GET /artists/new
+** (exit) an exception was raised:
+    ** (Phoenix.Template.UndefinedError) Could not render "new.html" for MixMaster.ArtistsView, please define a matching clause for render/2 or define a template at "web/templates/artists". The following templates were compiled:
 
-Failures:
+* index.html
 
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "New artist"
-
-     ActionView::MissingTemplate:
-       Missing template artists/new, application/new with {:locale=>[:en], :formats=>[:html], :variants=>[], :handlers=>[:erb, :builder, :raw, :ruby, :coffee, :jbuilder]}. Searched in:
-         * "/Users/rwarbelow/Desktop/Coding/Turing/mix_master/app/views"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
+...
 ```
 
-Again, the test is looking for a view that we dont have: `artists/new`. We'll make that view:
+Again, the test is looking for a template that we don't have: `web/templates/artists/new`. We'll make that template:
 
 ```
-$ touch app/views/artists/new.html.erb
+$ touch web/templates/artists/new.html.eex
 ```
 
 Run the spec again:
