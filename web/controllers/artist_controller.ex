@@ -1,4 +1,4 @@
-defmodule MixMaster.ArtistsController do
+defmodule MixMaster.ArtistController do
   use MixMaster.Web, :controller
 
   def index(conn, _params) do
@@ -6,7 +6,7 @@ defmodule MixMaster.ArtistsController do
   end
 
   def new(conn, _params) do
-    changeset = Artist.changeset(%Artist{})
+    # changeset = Artist.changeset(%Artist{})
     render conn, "new.html"
   end
 end

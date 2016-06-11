@@ -1,0 +1,3 @@
+<h1>All Artists</h1>
+
+<a href="<%= artist_path(@conn, :new) %>">New artist</a>

@@ -126,7 +126,7 @@ scope "/", MixMaster do
   pipe_through :browser # Use the default browser stack
 
   get "/", PageController, :index
-  resources "/artists", ArtistsController, only: [:index]
+  resources "/artists", ArtistController, only: [:index]
 end
 ```
 
@@ -134,7 +134,7 @@ When we run `mix phoenix.routes`, we'll see this output:
 
 ```
 page_path     GET  /         MixMaster.PageController :index
-artists_path  GET  /artists  MixMaster.ArtistsController :index
+artist_path  GET  /artists  MixMaster.ArtistController :index
 ```
 
 When we run the test again, we get the output:
@@ -143,8 +143,8 @@ When we run the test again, we get the output:
 Server: localhost:4001 (http)
 Request: GET /artists
 ** (exit) an exception was raised:
-    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsController.init/1 (module MixMaster.ArtistsController is not available)
-        MixMaster.ArtistsController.init(:index)
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistController.init/1 (module MixMaster.ArtistController is not available)
+        MixMaster.ArtistController.init(:index)
         (mix_master) web/router.ex:1: anonymous fn/1 in MixMaster.Router.match_route/4
         (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
         (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
@@ -163,14 +163,14 @@ Request: GET /artists
        test/features/user_creates_an_artist_test.exs:14
 ```
 
-We'll need to create an ArtistsController. Phoenix has many [mix tasks](http://www.phoenixframework.org/docs/mix-tasks), but let's create the controller by hand:
+We'll need to create an ArtistController. It seems that the convention for naming is slightly different from Rails, in that the controller for a model is singular. Phoenix has many [mix tasks](http://www.phoenixframework.org/docs/mix-tasks), but let's create the controller by hand:
 
-`$ touch web/controllers/artists_controller.ex`
+`$ touch web/controllers/artist_controller.ex`
 
 And inside of that file, we'll define the controller:
 
 ```elixir
-defmodule MixMaster.ArtistsController do
+defmodule MixMaster.ArtistController do
   use MixMaster.Web, :controller
 
   def index(conn, _params) do
@@ -186,13 +186,13 @@ Run the spec again and we get oh so so many errors.... One being that we don't h
 Server: localhost:4001 (http)
 Request: GET /artists
 ** (exit) an exception was raised:
-    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsView.render/2 (module MixMaster.ArtistsView is not available)
-        MixMaster.ArtistsView.render("index.html", %{conn: %Plug.Conn{adapter: {Plug.Adapters.Cowboy.Conn, :...}, assigns: %{layout: {MixMaster.LayoutView, "app.html"}}, before_send: [#Function<1.86541599/1 in Plug.CSRFProtection.call/2>, #Function<11.43365902/1 in Phoenix.Controller.fetch_flash/2>, #Function<0.7214162/1 in Plug.Session.before_send/2>, #Function<1.95519006/1 in Plug.Logger.call/2>], body_params: %{}, cookies: %{}, halted: false, host: "localhost", method: "GET", owner: #PID<0.419.0>, params: %{}, path_info: ["artists"], peer: {{127, 0, 0, 1}, 54191}, port: 4001, private: %{MixMaster.Router => {[], %{}}, :phoenix_action => :index, :phoenix_controller => MixMaster.ArtistsController, :phoenix_endpoint => MixMaster.Endpoint, :phoenix_flash => %{}, :phoenix_format => "html", :phoenix_layout => {MixMaster.LayoutView, :app}, :phoenix_pipelines => [:browser], :phoenix_route => #Function<0.60479521/1 in MixMaster.Router.match_route/4>, :phoenix_router => MixMaster.Router, :phoenix_template => "index.html", :phoenix_view => MixMaster.ArtistsView, :plug_session => %{}, :plug_session_fetch => :done}, query_params: %{}, query_string: "", remote_ip: {127, 0, 0, 1}, req_cookies: %{}, req_headers: [{"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}, {"user-agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1"}, {"connection", "Keep-Alive"}, {"accept-encoding", "gzip, deflate"}, {"accept-language", "en-US,*"}, {"host", "localhost:4001"}], request_path: "/artists", resp_body: nil, resp_cookies: %{}, resp_headers: [{"cache-control", "max-age=0, private, must-revalidate"}, {"x-request-id", "1p1mt3dkk01k4gg2enf457k2a00dulfu"}, {"x-frame-options", "SAMEORIGIN"}, {"x-xss-protection", "1; mode=block"}, {"x-content-type-options", "nosniff"}], scheme: :http, script_name: [], secret_key_base: "secretkeybase", state: :unset, status: nil}, view_module: MixMaster.ArtistsView, view_template: "index.html"})
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistView.render/2 (module MixMaster.ArtistView is not available)
+        MixMaster.ArtistView.render("index.html", %{conn: %Plug.Conn{adapter: {Plug.Adapters.Cowboy.Conn, :...}, assigns: %{layout: {MixMaster.LayoutView, "app.html"}}, before_send: [#Function<1.86541599/1 in Plug.CSRFProtection.call/2>, #Function<11.43365902/1 in Phoenix.Controller.fetch_flash/2>, #Function<0.7214162/1 in Plug.Session.before_send/2>, #Function<1.95519006/1 in Plug.Logger.call/2>], body_params: %{}, cookies: %{}, halted: false, host: "localhost", method: "GET", owner: #PID<0.419.0>, params: %{}, path_info: ["artists"], peer: {{127, 0, 0, 1}, 54191}, port: 4001, private: %{MixMaster.Router => {[], %{}}, :phoenix_action => :index, :phoenix_controller => MixMaster.ArtistController, :phoenix_endpoint => MixMaster.Endpoint, :phoenix_flash => %{}, :phoenix_format => "html", :phoenix_layout => {MixMaster.LayoutView, :app}, :phoenix_pipelines => [:browser], :phoenix_route => #Function<0.60479521/1 in MixMaster.Router.match_route/4>, :phoenix_router => MixMaster.Router, :phoenix_template => "index.html", :phoenix_view => MixMaster.ArtistView, :plug_session => %{}, :plug_session_fetch => :done}, query_params: %{}, query_string: "", remote_ip: {127, 0, 0, 1}, req_cookies: %{}, req_headers: [{"accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"}, {"user-agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/538.1 (KHTML, like Gecko) PhantomJS/2.1.1 Safari/538.1"}, {"connection", "Keep-Alive"}, {"accept-encoding", "gzip, deflate"}, {"accept-language", "en-US,*"}, {"host", "localhost:4001"}], request_path: "/artists", resp_body: nil, resp_cookies: %{}, resp_headers: [{"cache-control", "max-age=0, private, must-revalidate"}, {"x-request-id", "1p1mt3dkk01k4gg2enf457k2a00dulfu"}, {"x-frame-options", "SAMEORIGIN"}, {"x-xss-protection", "1; mode=block"}, {"x-content-type-options", "nosniff"}], scheme: :http, script_name: [], secret_key_base: "secretkeybase", state: :unset, status: nil}, view_module: MixMaster.ArtistView, view_template: "index.html"})
         (mix_master) web/templates/layout/app.html.eex:29: MixMaster.LayoutView."app.html"/1
         (phoenix) lib/phoenix/view.ex:344: Phoenix.View.render_to_iodata/3
         (phoenix) lib/phoenix/controller.ex:633: Phoenix.Controller.do_render/4
-        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.action/2
-        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.phoenix_controller_pipeline/2
+        (mix_master) web/controllers/artist_controller.ex:1: MixMaster.ArtistController.action/2
+        (mix_master) web/controllers/artist_controller.ex:1: MixMaster.ArtistController.phoenix_controller_pipeline/2
         (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
         (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
         (mix_master) lib/mix_master/endpoint.ex:1: MixMaster.Endpoint.phoenix_pipeline/1
@@ -201,13 +201,13 @@ Request: GET /artists
         (cowboy) src/cowboy_protocol.erl:442: :cowboy_protocol.execute/4
 ```
 
-In Phoenix, there's a View layer that aids in rendering templates. Controllers and Views must start with the same name, so an ArtistsController must have an ArtistsView. Let's create that now:
+In Phoenix, there's a View layer that aids in rendering templates. Controllers and Views must start with the same name, so an ArtistController must have an ArtistView. Let's create that now:
 ```
-touch web/views/artists_view.ex
+touch web/views/artist_view.ex
 ```
 and add
 ```elixir
-defmodule MixMaster.ArtistsView do
+defmodule MixMaster.ArtistView do
   use MixMaster.Web, :view
 end
 ```
@@ -217,16 +217,16 @@ Running the test again:
 ```
 Request: GET /artists
 ** (exit) an exception was raised:
-    ** (Phoenix.Template.UndefinedError) Could not render "index.html" for MixMaster.ArtistsView, please define a matching clause for render/2 or define a template at "web/templates/artists". No templates were compiled for this module.
+    ** (Phoenix.Template.UndefinedError) Could not render "index.html" for MixMaster.ArtistView, please define a matching clause for render/2 or define a template at "web/templates/artist". No templates were compiled for this module.
 ```
 
-Phoenix is attempting to find `web/templates/artists/index.html` inside of our templates folder, but it doesn't see it (because we haven't created it).
+Phoenix is attempting to find `web/templates/artist/index.html` inside of our templates folder, but it doesn't see it (because we haven't created it).
 
 Let's make that:
 
 ```
-$ mkdir web/templates/artists
-$ touch web/templates/artists/index.html.eex
+$ mkdir web/templates/artist
+$ touch web/templates/artist/index.html.eex
 ```
 
 Run the spec again and we're back to the error we started with, just without the crazy stack trace!
@@ -246,7 +246,7 @@ It's not seeing a link or button to click for new artist. We'll need to add that
 ```eex
 <h1>All Artists</h1>
 
-<a href="<%= artists_path(@conn, :new) %>">New artist</a>
+<a href="<%= artist_path(@conn, :new) %>">New artist</a>
 ```
 
 Run the spec:
@@ -254,17 +254,17 @@ Run the spec:
 ```
 Request: GET /artists
 ** (exit) an exception was raised:
-    ** (ArgumentError) No helper clause for MixMaster.Router.Helpers.artists_path/2 defined for action :new.
-The following artists_path actions are defined under your router:
+    ** (ArgumentError) No helper clause for MixMaster.Router.Helpers.artist_path/2 defined for action :new.
+The following artist_path actions are defined under your router:
 
   * :index
         (phoenix) lib/phoenix/router/helpers.ex:289: Phoenix.Router.Helpers.raise_route_error/5
-        (mix_master) web/templates/artists/index.html.eex:3: MixMaster.ArtistsView."index.html"/1
+        (mix_master) web/templates/artists/index.html.eex:3: MixMaster.ArtistView."index.html"/1
         (mix_master) web/templates/layout/app.html.eex:29: MixMaster.LayoutView."app.html"/1
         (phoenix) lib/phoenix/view.ex:344: Phoenix.View.render_to_iodata/3
         (phoenix) lib/phoenix/controller.ex:633: Phoenix.Controller.do_render/4
-        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.action/2
-        (mix_master) web/controllers/artists_controller.ex:1: MixMaster.ArtistsController.phoenix_controller_pipeline/2
+        (mix_master) web/controllers/artist_controller.ex:1: MixMaster.ArtistController.action/2
+        (mix_master) web/controllers/artist_controller.ex:1: MixMaster.ArtistController.phoenix_controller_pipeline/2
         (mix_master) lib/phoenix/router.ex:261: MixMaster.Router.dispatch/2
         (mix_master) web/router.ex:1: MixMaster.Router.do_call/2
         (mix_master) lib/mix_master/endpoint.ex:1: MixMaster.Endpoint.phoenix_pipeline/1
@@ -274,14 +274,14 @@ The following artists_path actions are defined under your router:
 ...
 ```
 
-We've used the `artists_path` helper with the :new action, but that doesn't exist yet. It should return a path of `'/artists/new'`, so we'll need to add this to our `web/router.ex`:
+We've used the `artist_path` helper with the :new action, but that doesn't exist yet. It should return a path of `'/artists/new'`, so we'll need to add this to our `web/router.ex`:
 
 ```elixir
 scope "/", MixMaster do
   pipe_through :browser # Use the default browser stack
 
   get "/", PageController, :index
-  resources "/artists", ArtistsController, only: [:index, :new]
+  resources "/artists", ArtistController, only: [:index, :new]
 end
 ```
 
@@ -289,16 +289,16 @@ Run `mix phoenix.routes` to see the new route:
 
 ```
 page_path     GET  /             MixMaster.PageController :index
-artists_path  GET  /artists      MixMaster.ArtistsController :index
-artists_path  GET  /artists/new  MixMaster.ArtistsController :new
+artist_path  GET  /artists      MixMaster.ArtistController :index
+artist_path  GET  /artists/new  MixMaster.ArtistController :new
 ```
 
-Now that we have the `artists_path(@conn, :new)`, we'll run the test again. Can you predict what the error will be?
+Now that we have the `artist_path(@conn, :new)`, we'll run the test again. Can you predict what the error will be?
 
 ```
 Request: GET /artists/new
 ** (exit) an exception was raised:
-    ** (UndefinedFunctionError) undefined function MixMaster.ArtistsController.new/2
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistController.new/2
 
 ...
 ```
@@ -306,7 +306,7 @@ Request: GET /artists/new
 Our route specifies that `'/artists/new'` should go to the `new` action in the controller, but we haven't defined that:
 
 ```elixir
-defmodule MixMaster.ArtistsController do
+defmodule MixMaster.ArtistController do
   use MixMaster.Web, :controller
 
   def index(conn, _params) do
@@ -324,72 +324,74 @@ Let's run the test again:
 ```
 Request: GET /artists/new
 ** (exit) an exception was raised:
-    ** (Phoenix.Template.UndefinedError) Could not render "new.html" for MixMaster.ArtistsView, please define a matching clause for render/2 or define a template at "web/templates/artists". The following templates were compiled:
+    ** (Phoenix.Template.UndefinedError) Could not render "new.html" for MixMaster.ArtistView, please define a matching clause for render/2 or define a template at "web/templates/artist". The following templates were compiled:
 
 * index.html
 
 ...
 ```
 
-Again, the test is looking for a template that we don't have: `web/templates/artists/new`. We'll make that template:
+Again, the test is looking for a template that we don't have: `web/templates/artist/new`. We'll make that template:
 
 ```
-$ touch web/templates/artists/new.html.eex
+$ touch web/templates/artist/new.html.eex
 ```
 
-Run the spec again:
+Run the test again:
 
 ```
-.
-F
+...
 
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: fill_in "artist_name", with: artist_name
-
-     Capybara::ElementNotFound:
-       Unable to find field "artist_name"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/capybara-2.5.0/lib/capybara/node/finders.rb:43:in `block in find'
-     ...
+  1) test User submits a new artist (MixMaster.UserCreatesArtistTest)
+     test/features/user_creates_an_artist_test.exs:8
+     ** (Hound.NoSuchElementError) No element found for name 'artist[name]'
+     stacktrace:
+       (hound) lib/hound/helpers/page.ex:51: Hound.Helpers.Page.find_element/3
+       (hound) lib/hound/helpers/element.ex:67: Hound.Helpers.Element.fill_field/2
+       test/features/user_creates_an_artist_test.exs:15
+...
 ```
 
-`Capybara::ElementNotFound: Unable to find field "artist_name"` means that it's looking for a field to fill in, but there's nothing on this page. We'll need to make a form for this new artist. In the `new.html.erb` view:
+`(Hound.NoSuchElementError) No element found for name 'artist[name]'` means that it's looking for a field to fill in, but there's nothing on this page. We'll need to make a form for this new artist. In the `new.html.erb` view:
 
-```erb
-<%= form_for(Artist.new) do |f| %>
-  <%= f.label :name %>
-  <%= f.text_field :name %>
+```elixir
+<h1>Create a new Artist!!!</h1>
+<%= form_for @changeset, artist_path(@conn, :create), fn f -> %>
+  <div class="form-group">
+    <%= text_input f, :name, placeholder: "Name", class: "form-control" %>
+  </div>
+  <%= submit "Create Artist", class: "btn btn-primary" %>
 <% end %>
 ```
 
-Notice that we only added one field, even though we know the artist will also have an `image_path`. That's because we don't know if this bit of code will work, or if there is something else we need to do before continuing on the form. Let's run the spec:
+Notice that we only added one field, even though we know the artist will also have an `image_path`. That's because we don't know if this bit of code will work, or if there is something else we need to do before continuing on the form. Let's run the test:
 
 ```
-.
-F
+** (exit) an exception was raised:
+    ** (ArgumentError) assign @changeset not available in eex template.
 
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: <%= form_for(Artist.new) do |f| %>
-
-     ActionView::Template::Error:
-       uninitialized constant ActionView::CompiledTemplates::Artist
-     # ./app/views/artists/new.html.erb:1:in `_app_views_artists_new_html_erb___2323050576229746218_70261753554780'
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-    ...
+Please make sure all proper assigns have been set. If this
+is a child template, ensure assigns are given explicitly by
+the parent template as they are not automatically forwarded.
 ```
 
-Ah! So we have an uninitialized constant `Artist`. In the form, we said `form_for(Artist.new)`, but Rails does not know what `Artist` is. This means we'll need to create the model since we're planning to store this in the database:
+Ah! So `@changeset` is not available on the template. In the form, we said `form_for @changeset`, but Phoenix does not know what `
+@changeset` is. What is this changeset we talk about? Before we get to changesets, which is feature of the Ecto library, let's create the Artist model.
+
+We can use a generator provided by Phoenix:
 
 ```
-$ rails g model Artist name image_path
+$ mix phoenix.gen.model Artist artists name image_path
 ```
 
-If we don't specify the data type from the command line, then the default will be a string. That sounds ok to me. This command will give us a migration, a model, and a model test.
+This will generate a model Artist, create a table artists in the database. If we don't specify the data type from the command line, then the default will be a string. That sounds ok to me. This command will give us a migration, a model, and a model test.
 
-Go ahead and run the spec again:
+
+
+In Phoenix (and Elixir), Ecto is the default ORM for talking to relational databases.
+
+
+
 
 ```
 /Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
