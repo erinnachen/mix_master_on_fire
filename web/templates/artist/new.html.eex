@@ -1,7 +1,10 @@
 <h1>Create a new Artist!!!</h1>
 <%= form_for @changeset, artist_path(@conn, :create), fn f -> %>
   <div class="form-group">
-    <%= text_input f, :name, placeholder: "Name", class: "form-control" %>
+  <%= text_input f, :name, placeholder: "Name", class: "form-control" %>
+  </div>
+  <div class="form-group">
+  <%= text_input f, :image_path, placeholder: "Image Path", class: "form-control" %>
   </div>
   <%= submit "Create Artist", class: "btn btn-primary" %>
 <% end %>

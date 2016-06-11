@@ -17,7 +17,7 @@ defmodule MixMaster.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
-    resources "/artists", ArtistController, only: [:index, :new]
+    resources "/artists", ArtistController, only: [:index, :new, :create]
   end
 
   # Other scopes may use custom stacks.

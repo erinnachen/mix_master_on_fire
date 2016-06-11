@@ -386,148 +386,113 @@ $ mix phoenix.gen.model Artist artists name image_path
 
 This will generate a model Artist, create a table artists in the database. If we don't specify the data type from the command line, then the default will be a string. That sounds ok to me. This command will give us a migration, a model, and a model test.
 
+Let's double check the migration to see if it makes sense:
 
+```elixir
+defmodule MixMaster.Repo.Migrations.CreateArtist do
+  use Ecto.Migration
 
-In Phoenix (and Elixir), Ecto is the default ORM for talking to relational databases.
+  def change do
+    create table(:artists) do
+      add :name, :string
+      add :image_path, :string
 
+      timestamps
+    end
 
-
-
-```
-/Users/rwarbelow/Desktop/Coding/Turing/mix_master/db/schema.rb doesn't exist yet. Run `rake db:migrate` to create it, then try again. If you do not intend to use a database, you should instead alter /Users/rwarbelow/Desktop/Coding/Turing/mix_master/config/application.rb to limit the frameworks that will be loaded.
-/usr/local/rvm/gems/ruby-2.2.2/gems/activerecord-4.2.5/lib/active_record/migration.rb:392:in `check_pending!':  (ActiveRecord::PendingMigrationError)
-
-Migrations are pending. To resolve this issue, run:
-
-  bin/rake db:migrate RAILS_ENV=test
-
-  from /usr/local/rvm/gems/ruby-2.2.2/gems/activerecord-4.2.5/lib/active_record/migration.rb:405:in `load_schema_if_pending!'
-  ...
-```
-
-Now we care about that first message: `/schema.rb doesn't exist yet. Run rake db:migrate to create it, then try again.`
-
-Let's follow this error message and run `rake db:migrate`. This will generate our schema that will then be loaded into our test database when we run our specs. Run them, and you'll see this message:
-
-```
-F*
-
-Pending: (Failures listed here are expected and do not affect your suite's status)
-
-  1) Artist add some examples to (or delete) /Users/rwarbelow/Desktop/Coding/Turing/mix_master/spec/models/artist_spec.rb
-     # Not yet implemented
-     # ./spec/models/artist_spec.rb:4
-
-
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: fill_in "artist_image_path", with: artist_image_path
-
-     Capybara::ElementNotFound:
-       Unable to find field "artist_image_path"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/capybara-2.5.0/lib/capybara/node/finders.rb:43:in `block in find'
-     ...
-```
-
-Here we have a `Pending` spec: inside of our `artist_spec.rb` file (which was generated when we typed `rails g model Artist`), it stubs out the beginning of a spec to be implemented later. That's ok. We'll leave it for now.
-
-We're failing for a different reason now: `Capybara::ElementNotFound: Unable to find field "artist_image_path"`. What does this mean? Well, we're no longer failing on the `fill_in "artist_name"` line. So we'll need to add another field to our form:
-
-```erb
-<%= form_for(Artist.new) do |f| %>
-  <%= f.label :name %>
-  <%= f.text_field :name %>
-
-  <%= f.label :image_path %>
-  <%= f.text_field :image_path %>
-<% end %>
-```
-
-Run the spec again (I'll leave out the pending example):
-
-```
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "Create Artist"
-
-     Capybara::ElementNotFound:
-       Unable to find link or button "Create Artist"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/capybara-2.5.0/lib/capybara/node/finders.rb:43:in `block in find'
-     ...
-```
-
-Cool. The `image_path` field is working. Now it can't find a link or button to create the artist. Let's add a submit button to our form:
-
-```erb
-<%= form_for(Artist.new) do |f| %>
-  <%= f.label :name %>
-  <%= f.text_field :name %>
-
-  <%= f.label :image_path %>
-  <%= f.text_field :image_path %>
-
-  <%= f.submit %>
-<% end %>
-```
-
-By default, the Rails `form_for` will put text on the submit button that says "Create Artist" since the form is for an `Artist.new`. If this form were for an existing artist, then the default text would be "Update Artist". You can override the default value of the button by doing something like `<%= f.submit "Save this artist!" %>`. We won't worry about overriding the default today.
-
-Run the spec:
-
-```
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "Create Artist"
-
-     ActionController::RoutingError:
-       No route matches [POST] "/artists"
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/railties-4.2.5/lib/rails/rack/logger.rb:38:in `call_app'
-     ...
-```
-
-Great! Our submit button was found, and now it's trying to find the route for `[POST] "/artists"`. When we look at our routes, we see this:
-
-```
-    Prefix Verb URI Pattern            Controller#Action
-   artists GET  /artists(.:format)     artists#index
-new_artist GET  /artists/new(.:format) artists#new
-```
-
-Do you see a `POST` for `'/artists'`? Because I don't. This means we'll need to modify our `routes.rb`:
-
-```ruby
-Rails.application.routes.draw do
-  resources :artists, only: [:index, :new, :create]
+  end
 end
 ```
+This looks good, so we can run
+```
+$ mix ecto.migrate
+```
+to migrate the database.
 
-Now the output of `rake routes` looks like this:
+In Phoenix (and Elixir), Ecto is the default ORM for talking to relational databases. Ecto has construct called changesets which allows it to manage record changes, cast parameters and perform validations. Changesets are specific to a type of change. When we generated our model, a method called `changeset` was placed in our Artist model.
+```elixir
+  defmodule MixMaster.Artist do
+    use MixMaster.Web, :model
+
+    schema "artists" do
+      field :name, :string
+      field :image_path, :string
+
+      timestamps
+    end
+
+    @required_fields ~w(name image_path)
+    @optional_fields ~w()
+
+    @doc """
+    Creates a changeset based on the `model` and `params`.
+
+    If no params are provided, an invalid changeset is returned
+    with no validation performed.
+    """
+    def changeset(model, params \\ :empty) do
+      model
+      |> cast(params, @required_fields, @optional_fields)
+    end
+  end
+```
+A nice feature is that the schema of our database model is included in our model file. In `changeset`, params are cast into our required fields name and image_path, and our optional fields are currently empty. Validations and such can also be piped through our changeset. Our test is still looking for a changeset in the view. Let's add that on our controller:
+
+```elixir
+  def new(conn, _params) do
+    changeset = Artist.changeset(%Artist{})
+    render conn, "new.html", changeset: changeset
+  end
+```
+making sure to add `alias MixMaster.Artist` at the top of the file as well. Let's re-run the tests and we should see:
 
 ```
-    Prefix Verb URI Pattern            Controller#Action
-   artists GET  /artists(.:format)     artists#index
-           POST /artists(.:format)     artists#create
-new_artist GET  /artists/new(.:format) artists#new
+Request: GET /artists/new
+** (exit) an exception was raised:
+    ** (ArgumentError) No helper clause for MixMaster.Router.Helpers.artist_path/2 defined for action :create.
+The following artist_path actions are defined under your router:
+
+  * :index
+  * :new
+        (phoenix) lib/phoenix/router/helpers.ex:289: Phoenix.Router.Helpers.raise_route_error/5
+        (mix_master) web/templates/artist/new.html.eex:2: MixMaster.ArtistView."new.html"/1
+        (mix_master) web/templates/layout/app.html.eex:29: MixMaster.LayoutView."app.html"/1
+```
+The form we created in `new.html.eex` needs the path and action `:create` on ArtistController. Let's add that in our router.
+```elixir
+  scope "/", MixMaster do
+    pipe_through :browser # Use the default browser stack
+
+    get "/", PageController, :index
+    resources "/artists", ArtistController, only: [:index, :new, :create]
+  end
 ```
 
-Ok, now our `POST` to `'/artists'` exists. Run the spec and predict what the error will be before you look below!
+Running our test, we're failing for a different reason now (yay finally!): `(Hound.NoSuchElementError) No element found for name 'artist[image_path]'`. What does this mean? Well, we didn't add any place for `image_path` in our form, so let's add another field to our form:
 
 ```
-Failures:
-
-  1) User submits a new artist they see the page for the individual artist
-     Failure/Error: click_on "Create Artist"
-
-     AbstractController::ActionNotFound:
-       The action 'create' could not be found for ArtistsController
-     # /usr/local/rvm/gems/ruby-2.2.2/gems/rack-1.6.4/lib/rack/etag.rb:24:in `call'
-     ...
+<h1>Create a new Artist!!!</h1>
+<%= form_for @changeset, artist_path(@conn, :create), fn f -> %>
+  <div class="form-group">
+    <%= text_input f, :name, placeholder: "Name", class: "form-control" %>
+  </div>
+  <div class="form-group">
+    <%= text_input f, :image_path, placeholder: "Image Path", class: "form-control" %>
+  </div>
+  <%= submit "Create Artist", class: "btn btn-primary" %>
+<% end %>
 ```
 
-That route is trying to go to the `create` action in our controller. Let's make that:
+Run the test again:
+
+```
+Request: POST /artists
+** (exit) an exception was raised:
+    ** (UndefinedFunctionError) undefined function MixMaster.ArtistController.create/2
+    ...
+```
+
+Cool. The `image_path` field is working but we now can't find the create action on our controller. Let's make that:
 
 ```ruby
 Failures:
